@@ -16,6 +16,8 @@ console.log(__dirname);
 
 const app = express()
 const port = 8000
+
+app.use(express.json());  // middleware needed to grab json data from request and add to req.body
 //here is a change
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '../build')));
@@ -37,6 +39,7 @@ console.log(movieData);
     {"title":"Titanic"},
     {"title":"Die Hard"}
 ];*/
+
 
 app.get('/api/movies', async (req, res) => {
     
