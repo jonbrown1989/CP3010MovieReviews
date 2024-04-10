@@ -4,7 +4,7 @@ import fs from 'fs';
 import {MongoClient } from 'mongodb';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
-import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as dotenv from 'dotenv' 
 import bodyParser from 'body-parser'
 dotenv.config()
 
@@ -17,6 +17,30 @@ console.log(__dirname);
 const app = express()
 const port = 8000
 
+import mongoose from 'mongoose';
+dotenv.config();
+console.log("Loaded environment variables:", process.env);
+console.log("MongoDB connection string:", process.env.MONGO_CONNECT);
+
+// #2. Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/movies', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch((error) => console.error('Failed to connect to MongoDB', error));
+
+// #3. Create Model/Schema
+const customerSchema = new mongoose.Schema({
+  name: String,
+  movie: String,
+  email: {
+    type: String,
+    required: true
+  }
+});
+
+const Customer = mongoose.model('Customer', customerSchema);
 app.use(express.json());  // middleware needed to grab json data from request and add to req.body
 //here is a change
 app.use(express.urlencoded({ extended: false }));
@@ -55,6 +79,27 @@ app.get('/api/movies', async (req, res) => {
     res.json(movieData);
 
 })
+
+//#4 New route for adding info
+app.post('/api/addInfo', jsonParser, async (req, res) => {
+  try {
+    const { name, movie, email } = req.body;
+
+
+    // #5 Handle error condition
+    if (!name || !movie || !email) {
+      return res.status(206).json({error: 'Must provide all required fields'})
+    }
+  
+    const newCustomer = new Customer({ name, movie, email });
+    await newCustomer.save();
+
+    res.status(200).json({ message: 'Customer info saved successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 app.post('/api/removeMovie', async (req, res) => {
    console.log(req.body.title);
@@ -124,3 +169,5 @@ const saveData = () => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
+
+export default app;
